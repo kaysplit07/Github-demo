@@ -1,57 +1,55 @@
-variable "blobs" {
-  description = "Map of blobs to create"
+############################################
+# Variables (with default values)
+############################################
+
+variable "storage_blobs" {
+  description = "Map of storage blobs to deploy"
   type = map(object({
+    name                   = string
     storage_container_name = string
-    type                   = string
     blob_source            = string
   }))
+
+  default = {
+    blob1 = {
+      name                   = "app-logs-blob"
+      storage_container_name = "logs"
+      blob_source            = "files/app-logs.zip"
+    }
+
+    blob2 = {
+      name                   = "backup-blob"
+      storage_container_name = "backups"
+      blob_source            = "files/db-backup.bak"
+    }
+
+    blob3 = {
+      name                   = "config-blob"
+      storage_container_name = "configs"
+      blob_source            = "files/app-config.json"
+    }
+  }
 }
 
-
-blobs = {
-  blob1 = {
-    storage_container_name = "container-a"
-    type                   = "Block"
-    blob_source            = "files/file1.txt"
-  }
-  blob2 = {
-    storage_container_name = "container-b"
-    type                   = "Block"
-    blob_source            = "files/file2.txt"
-  }
-}
-
-
+############################################
+# Storage Blob Module (multiple blobs)
+############################################
 
 module "storage_blob" {
-  for_each = var.blobs
+  for_each = var.storage_blobs
 
   source  = "cps-terraform.anthem.com/<ORG-NAME>/terraform-azurerm-storage-blob/azurerm"
   version = "1.0.0"
 
-  name                   = each.key
+  name                   = each.value.name
   storage_account_name   = module.storage_account_sctest.name
   storage_container_name = each.value.storage_container_name
-  type                   = each.value.type
+  type                   = "Block"
   blob_source            = each.value.blob_source
 
   # encryption_scope = module.storage_encryption_scope_sctest.name
 
-  depends_on = [module.storage_container]
-}
-
-
-
-
-module "storage_blob" {
-  source                 = "cps-terraform.anthem.com/<ORG-NAME>/terraform-azurerm-storage-blob/azurerm"
-  version                = "1.0.0"
-
-  name                   = ""
-  storage_account_name   = module.storage_account_sctest.name
-  storage_container_name = "" # Storage COntainer's name
-  type                   = "Block"
-  blob_source            = ""
-  # encryption_scope = module.storage_encryption_scope_sctest.name
-  depends_on = [ module.storage_container]
+  depends_on = [
+    module.storage_container
+  ]
 }
