@@ -39,3 +39,19 @@ module "storage_blob" {
 
   depends_on = [module.storage_container]
 }
+
+
+
+
+module "storage_blob" {
+  source                 = "cps-terraform.anthem.com/<ORG-NAME>/terraform-azurerm-storage-blob/azurerm"
+  version                = "1.0.0"
+
+  name                   = ""
+  storage_account_name   = module.storage_account_sctest.name
+  storage_container_name = "" # Storage COntainer's name
+  type                   = "Block"
+  blob_source            = ""
+  # encryption_scope = module.storage_encryption_scope_sctest.name
+  depends_on = [ module.storage_container]
+}
