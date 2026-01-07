@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-approved-tenants
+  namespace: {{ .Values.targetNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.appLabel }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+{{- range .Values.allowedTenants }}
+        - namespaceSelector:
+            matchLabels:
+              tenant: {{ . }}
+{{- end }}
+
+
+
+tenant
+
+targetNamespace: app-namespace
+appLabel: my-app
+
+allowedTenants:
+  - tenant-a
+
+
+Namespace label:
+
+tenant: tenant-a
+
+
+### multiple  
+targetNamespace: app-namespace
+appLabel: my-app
+
+allowedTenants:
+  - tenant-a
+  - tenant-b
+  - tenant-c
+
+
+
