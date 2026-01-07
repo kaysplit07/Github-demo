@@ -1,109 +1,555 @@
-#############################################################paragonsotdev-Storage Account#####################################################################################
-module "terraform-azurerm-storage-account-paragonsotdev" {
+#############################################################crlnrxsotdev-Storage Account#####################################################################################
+module "terraform-azurerm-storage-account-crlnrxsotdev" {
   source                    = "cps-terraform.anthem.com//terraform-azurerm-storage-account/azurerm"
   version                   = "0.0.5"
-  name                      = "paragonsotdev"
-  resource_group_name       = "apm10-slvr-1cqua-01-rg"
+  name                      = "crlnrxsotdev"
+  resource_group_name       = "apm1080912-slvr-jtibi-01-rg"
   location                  = "Central US"
   account_tier              = "Standard"
   account_replication_type  = "LRS"
   tags                      = module.mandatory_tags.tags
   identity_ids              = [data.azurerm_user_assigned_identity.identity.id]
-  key_vault_key_id          = module.terraform-azurerm-cit-azure-key-crdev.versionless_azure_key_id
+  key_vault_key_id          = module.terraform-azurerm-ciphertrust-azure-key-crlnrxsotdev.versionless_azure_key_id
   user_assigned_identity_id = data.azurerm_user_assigned_identity.identity.id
   blob_properties = {
     versioning_enabled = false
     delete_retention_policy = {
-      days    = 7
+      days                  = 7
       enabled = true
-    }
+}
     cors_rule = {
       allowed_headers    = ["*"]
       allowed_methods    = ["GET","PUT","OPTIONS","HEAD"]
-      allowed_origins    = ["https://dev.rxintegration-hub.car.com"]
+      allowed_origins    = ["https://dev.rxintegration-hub.carelonrx.com"]
       exposed_headers    = ["*"]
       max_age_in_seconds = 0
-    }
   }
+} 
 }
-
-############################### paragonsotdev Private End Point ####################################################
-module "terraform-azurerm-private-endpoint-paragonsotdev" {
-  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
-  version             = "1.0.0"
-  name                = "paragonsotdev-pe"
-  resource_group_name = "apm10-slvr-jtibi-01-rg"
-  location            = "Central US"
-  tags                = module.mandatory_tags.tags
-  subnet_id           = "/subscriptions/4a4ca28a-/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
-
+############################### crlnrxsotdev Private End Point ####################################################
+module "terraform-azurerm-private-endpoint-crlnrxsotdev" {
+  source                  = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version                 = "1.0.0"  
+  name                    = "crlnrxsotdev-pe"
+  resource_group_name     = "apm1080912-slvr-jtibi-01-rg"
+  location                = "Central US"
+  tags                    = module.mandatory_tags.tags
+  subnet_id               = "/subscriptions/4a4ca28a-039f-4b71-be03-0eac742a48a2/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private" # Specify the subnet where the private endpoint will connect
   private_service_connection = {
-    name                           = "paragonsotdev-psc"
-    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    name                           = "crlnrxsotdev-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-crlnrxsotdev.id
     subresource_names              = ["blob"]
   }
 
+  ## Static Shared Service Private DNS Details
   private_dns_zone_group = {
-    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-4745/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"]
+    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-474c-9d53-c66924f53505/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"] 
     name                 = "privatelink.blob.core.windows.net"
   }
-
+  
+  ## If sub-resource is blob, file or queue , set the below parameter create_time_sleep to true.
   create_time_sleep = true
 }
 
-############################### paragonsotdev-table ####################################################
-module "terraform-azurerm-private-endpoint-paragonsotdev-table" {
-  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
-  version             = "1.0.0"
-  name                = "paragonsotdev-table-pe"
-  resource_group_name = "apm100slvr-jtibi-01-rg"
-  location            = "Central US"
-  tags                = module.mandatory_tags.tags
-  subnet_id           = "/subscriptions/4a4ca28a-039f-4b71-be03-0ea/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
-
+############################### crlnrxsotdev-table ####################################################
+module "terraform-azurerm-private-endpoint-crlnrxsotdev-table" {
+  source                  = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version                 = "1.0.0"  
+  name                    = "crlnrxsotdev-table-pe"
+  resource_group_name     = "apm1080912-slvr-jtibi-01-rg"
+  location                = "Central US"
+  tags                    = module.mandatory_tags.tags
+  subnet_id               = "/subscriptions/4a4ca28a-039f-4b71-be03-0eac742a48a2/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private" # Specify the subnet where the private endpoint will connect
   private_service_connection = {
-    name                           = "paragonsotdev-table-psc"
-    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    name                           = "crlnrxsotdev-table-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-crlnrxsotdev.id
     subresource_names              = ["table"]
   }
 
+  ## Static Shared Service Private DNS Details
   private_dns_zone_group = {
-    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-4-c66924f53505/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net"]
+    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-474c-9d53-c66924f53505/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net"] 
     name                 = "privatelink.table.core.windows.net"
   }
-
+  
+  ## If sub-resource is blob, file or queue , set the below parameter create_time_sleep to true.
   create_time_sleep = true
 }
 
-############################### paragonsotdev-queue ####################################################
-module "terraform-azurerm-private-endpoint-paragonsotdev-queue" {
-  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
-  version             = "1.0.0"
-  name                = "paragonsotdev-queue-pe"
-  resource_group_name = "apm1080slvr-jtibi-01-rg"
-  location            = "Central US"
-  tags                = module.mandatory_tags.tags
-  subnet_id           = "/subscriptions/4a4ca28a-039f-4b71-be02/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
-
+############################### crlnrxsotdev-queue ####################################################
+module "terraform-azurerm-private-endpoint-crlnrxsotdev-queue" {
+  source                  = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version                 = "1.0.0"  
+  name                    = "crlnrxsotdev-queue-pe"
+  resource_group_name     = "apm1080912-slvr-jtibi-01-rg"
+  location                = "Central US"
+  tags                    = module.mandatory_tags.tags
+  subnet_id               = "/subscriptions/4a4ca28a-039f-4b71-be03-0eac742a48a2/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private" # Specify the subnet where the private endpoint will connect
   private_service_connection = {
-    name                           = "paragonsot-queue-psc"
-    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    name                           = "crlnrxsotdev-queue-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-crlnrxsotdev.id
     subresource_names              = ["queue"]
   }
 
+  ## Static Shared Service Private DNS Details
   private_dns_zone_group = {
-    private_dns_zone_ids = ["/subscriptions/c3422df3/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.queue.core.windows.net"]
+    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-474c-9d53-c66924f53505/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.queue.core.windows.net"] 
     name                 = "privatelink.queue.core.windows.net"
   }
-
+  
+  ## If sub-resource is blob, file or queue , set the below parameter create_time_sleep to true.
   create_time_sleep = true
 }
 
-##############################paragonsot-functionstorage-container#############################################################
+##############################crlnrxsotdev CipherTrust Azure Key Creation for Enc Scope##############################
+module "terraform-azurerm-ciphertrust-azure-key-crlnrxsotdev" {
+  source                  = "cps-terraform.anthem.com//terraform-azurerm-ciphertrust-azure-key/azurerm"
+  version                 = "0.0.11"
+  service_key_name        = var.service_key_name
+  ciphertrust_azure_vault = var.cipher_vault_id
+  tags                    = module.mandatory_tags.elvh_mandatory_tags
+}
+
+###############################crln-rxsot-pic-container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-pic" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-pic"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-pic-inbound-folder#############################################################
+module "terraform-azurerm-storage-blob" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-pic" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-pic]
+}
+
+#######################################crln-rxsot-pic-PROCESSING-folder####################################################
+module "terraform-azurerm-storage-blob-processing" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "PROCESSING/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-pic" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-pic]
+}
+
+#########################################crln-rxsot-pic-error-folder##################
+module "terraform-azurerm-storage-blob-error" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "ERROR/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-pic" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-pic]
+}
+
+#########################################crln-rxsot-pic-ARCHIVE-folder##################
+module "terraform-azurerm-storage-blob-archive" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "ARCHIVE/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-pic" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-pic]
+}
+
+###############################crln-rxsot-ibc-container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-ibc" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-ibc"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-ibc-inbound-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-ibc" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-ibc" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-ibc]
+}
+
+###############################crln-rxsot-eoc-container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-eoc" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-eoc"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-eoc-inbound-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-eoc" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-eoc" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-eoc]
+}
+
+module "terraform-azurerm-storage-blob-crln-rxsot-eoc-processing" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "PROCESSING/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-eoc" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-eoc]
+}
+
+###############################crln-rxsot-sf-container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-sf" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-sf"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-sf-inbound-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+###############################crln-rxsot-sf-trigger-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf-trigger" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "trigger/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+###############################crln-rxsot-sf-standard-response-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf-standard-response" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "standard-response/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+###############################crln-rxsot-sf-SFJsonLoc-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf-SFJsonLoc" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "SFJsonLoc/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+###############################crln-rxsot-sf-standard-info-container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-sf-standard-info" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-sf-standard-info"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-sf-standard-info-inbound-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf-standard-info" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf-standard-info" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+###############################crln-rxsot-sf-sucess-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sf-success" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "success/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sf" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+
+###############################crln-irxsot-ibc-dev-container#############################################################
+ module "terraform-azurerm-storage-container" {
+     source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+     version               = "0.0.2"
+     name                  = "crln-irxsot-ibc-dev"
+     storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+     depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+ }
+
+##############################crlnrxsot-functionstorage-container#############################################################
 module "terraform-azurerm-storage-container-function" {
-  source               = "cps-terraform.anthem.com/IRX/terraform-azurerm-storage-container/azurerm"
-  version              = "0.0.2"
-  name                 = "crln-rxsot-pic-dev"
-  storage_account_name = module.terraform-azurerm-storage-account-paragonsotdev.name
-  depends_on           = [module.terraform-azurerm-private-endpoint-paragonsotdev]
+    source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-pic-dev"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+##############################crln-rxsot-export container#############################################################
+module "terraform-azurerm-storage-container-export" {
+    source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-export"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+##############################crln-rxsot-export-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-export" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "validation-reports/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-export" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sf]
+}
+
+##############################crln-rxsot-cep container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-cep" {
+    source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-cep"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+##############################crln-rxsot-cep-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-cep" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-cep" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-cep]
+}
+
+##############################crln-rxsot-sob container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-sob" {
+    source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-sob"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+##############################crln-rxsot-case-attachment container#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-case-attachment" {
+    source = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-case-attachment"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+##############################crln-rxsot-sob-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-sob" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-sob" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-sob]
+}
+
+####################################crln-rxsot-ibc-eventhub-checkpoints###################################################
+module "terraform-azurerm-storage-container-crln-rxsot-ibc-eh-checkpoints" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-ibc-eh-checkpoints"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+####################################function-app-eventhub-checkpoints-crln-rxsot-pic###################################################
+module "terraform-azurerm-storage-container-crln-rxsot-pic-eh-checkpoint" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-pic-eh-checkpoint"
+    storage_account_name  = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+# ###############################crln-rxsot-canonical#############################################################
+module "terraform-azurerm-storage-container-crln-rxsot-canonical" {
+    source                = "cps-terraform.anthem.com//terraform-azurerm-storage-container/azurerm"
+    version               = "0.0.2"
+    name                  = "crln-rxsot-canonical"
+    storage_account_name  =  module.terraform-azurerm-storage-account-crlnrxsotdev.name
+    depends_on            = [module.terraform-azurerm-private-endpoint-crlnrxsotdev]
+}
+
+###############################crln-rxsot-canonical-account-mock-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-account-mock" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "account_mock/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-account-structure-INBOUND-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-account-structure-INBOUND" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "account_structure/INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-canonical_response-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-canonical-response" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "canonical_response/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-canonical-validation-salesforce-archive-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-canonical-validation-salesforce-archive" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "canonical_validation/salesforce/archive/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-canonical-validation-salesforce-error-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-canonical-validation-salesforce-error" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "canonical_validation/salesforce/error/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-sob-mock-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-sob-mock" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "sob_mock/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-sob-INBOUND-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-sob-INBOUND" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "sob/INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-sample-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-sample" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep/sample/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-mock-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-mock" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep_mock/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-INBOUND-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-INBOUND" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep/INBOUND/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-PROCESSING-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-PROCESSING" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep/PROCESSING/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-COMPLETED-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-COMPLETED" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep/COMPLETED/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
+}
+
+###############################crln-rxsot-canonical-cep-ERROR-folder#############################################################
+module "terraform-azurerm-storage-blob-crln-rxsot-canonical-cep-ERROR" {
+  source                 = "cps-terraform.anthem.com//terraform-azurerm-storage-blob/azurerm"
+  name                   = "cep/ERROR/sample-blob.txt"
+  version                = "0.0.2"
+  storage_account_name   = module.terraform-azurerm-storage-account-crlnrxsotdev.name
+  storage_container_name = "crln-rxsot-canonical" # Storage COntainer's name
+  type                   = "Block"
+  depends_on             = [module.terraform-azurerm-storage-container-crln-rxsot-canonical]
 }
