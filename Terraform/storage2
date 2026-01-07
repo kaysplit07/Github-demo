@@ -1,0 +1,109 @@
+#############################################################paragonsotdev-Storage Account#####################################################################################
+module "terraform-azurerm-storage-account-paragonsotdev" {
+  source                    = "cps-terraform.anthem.com//terraform-azurerm-storage-account/azurerm"
+  version                   = "0.0.5"
+  name                      = "paragonsotdev"
+  resource_group_name       = "apm10-slvr-1cqua-01-rg"
+  location                  = "Central US"
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+  tags                      = module.mandatory_tags.tags
+  identity_ids              = [data.azurerm_user_assigned_identity.identity.id]
+  key_vault_key_id          = module.terraform-azurerm-cit-azure-key-crdev.versionless_azure_key_id
+  user_assigned_identity_id = data.azurerm_user_assigned_identity.identity.id
+  blob_properties = {
+    versioning_enabled = false
+    delete_retention_policy = {
+      days    = 7
+      enabled = true
+    }
+    cors_rule = {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["GET","PUT","OPTIONS","HEAD"]
+      allowed_origins    = ["https://dev.rxintegration-hub.car.com"]
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 0
+    }
+  }
+}
+
+############################### paragonsotdev Private End Point ####################################################
+module "terraform-azurerm-private-endpoint-paragonsotdev" {
+  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version             = "1.0.0"
+  name                = "paragonsotdev-pe"
+  resource_group_name = "apm10-slvr-jtibi-01-rg"
+  location            = "Central US"
+  tags                = module.mandatory_tags.tags
+  subnet_id           = "/subscriptions/4a4ca28a-/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
+
+  private_service_connection = {
+    name                           = "paragonsotdev-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    subresource_names              = ["blob"]
+  }
+
+  private_dns_zone_group = {
+    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-4745/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"]
+    name                 = "privatelink.blob.core.windows.net"
+  }
+
+  create_time_sleep = true
+}
+
+############################### paragonsotdev-table ####################################################
+module "terraform-azurerm-private-endpoint-paragonsotdev-table" {
+  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version             = "1.0.0"
+  name                = "paragonsotdev-table-pe"
+  resource_group_name = "apm100slvr-jtibi-01-rg"
+  location            = "Central US"
+  tags                = module.mandatory_tags.tags
+  subnet_id           = "/subscriptions/4a4ca28a-039f-4b71-be03-0ea/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
+
+  private_service_connection = {
+    name                           = "paragonsotdev-table-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    subresource_names              = ["table"]
+  }
+
+  private_dns_zone_group = {
+    private_dns_zone_ids = ["/subscriptions/c3422df3-52b6-4-c66924f53505/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net"]
+    name                 = "privatelink.table.core.windows.net"
+  }
+
+  create_time_sleep = true
+}
+
+############################### paragonsotdev-queue ####################################################
+module "terraform-azurerm-private-endpoint-paragonsotdev-queue" {
+  source              = "cps-terraform.anthem.com//terraform-azurerm-private-endpoint/azurerm"
+  version             = "1.0.0"
+  name                = "paragonsotdev-queue-pe"
+  resource_group_name = "apm1080slvr-jtibi-01-rg"
+  location            = "Central US"
+  tags                = module.mandatory_tags.tags
+  subnet_id           = "/subscriptions/4a4ca28a-039f-4b71-be02/resourceGroups/rg-irx-network-slvr-centralus/providers/Microsoft.Network/virtualNetworks/vnet-irx-slvr-centralus/subnets/snet-private"
+
+  private_service_connection = {
+    name                           = "paragonsot-queue-psc"
+    private_connection_resource_id = module.terraform-azurerm-storage-account-paragonsotdev.id
+    subresource_names              = ["queue"]
+  }
+
+  private_dns_zone_group = {
+    private_dns_zone_ids = ["/subscriptions/c3422df3/resourceGroups/rg-ss-network-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.queue.core.windows.net"]
+    name                 = "privatelink.queue.core.windows.net"
+  }
+
+  create_time_sleep = true
+}
+
+##############################paragonsot-functionstorage-container#############################################################
+module "terraform-azurerm-storage-container-function" {
+  source               = "cps-terraform.anthem.com/IRX/terraform-azurerm-storage-container/azurerm"
+  version              = "0.0.2"
+  name                 = "crln-rxsot-pic-dev"
+  storage_account_name = module.terraform-azurerm-storage-account-paragonsotdev.name
+  depends_on           = [module.terraform-azurerm-private-endpoint-paragonsotdev]
+}
