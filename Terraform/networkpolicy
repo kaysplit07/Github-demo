@@ -1,62 +1,229 @@
-Deny
+kubectl label namespace tenant-a tenant=tenant-a
+kubectl label namespace tenant-b tenant=tenant-b
 
+
+Each tenant only controls their own identity, nothing else.
+
+values-tenant-a.yaml
+tenant:
+  name: tenant-a
+  namespace: tenant-a
+
+networkPolicy:
+  enabled: true
+
+  allowSameTenant: true
+
+  allowDNS: true
+
+  extraEgress: []
+  # Example:
+  # - toCIDR: 10.0.0.0/16
+  #   ports:
+  #     - port: 443
+
+values-tenant-b.yaml
+tenant:
+  name: tenant-b
+  namespace: tenant-b
+
+networkPolicy:
+  enabled: true
+  allowSameTenant: true
+  allowDNS: true
+
+2️⃣ Namespace Template (Helm)
+
+This ensures labels are consistent (critical for isolation).
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.tenant.namespace }}
+  labels:
+    tenant: {{ .Values.tenant.name }}
+
+
+✔ No tenant can fake another tenant’s label
+✔ Namespace selector remains trustworthy
+
+3️⃣ Default Deny NetworkPolicy (Template)
+
+templates/networkpolicy-default-deny.yaml
+
+{{- if .Values.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: deny-all-ingress
-  namespace: {{ .Values.targetNamespace }}
+  name: default-deny
+  namespace: {{ .Values.tenant.namespace }}
 spec:
-  podSelector:
-    matchLabels:
-      app: {{ .Values.appLabel }}
+  podSelector: {}
   policyTypes:
     - Ingress
+    - Egress
+{{- end }}
 
+4️⃣ Allow Same-Tenant Traffic Only
 
+templates/networkpolicy-allow-same-tenant.yaml
 
+{{- if and .Values.networkPolicy.enabled .Values.networkPolicy.allowSameTenant }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-from-approved-tenants
-  namespace: {{ .Values.targetNamespace }}
+  name: allow-same-tenant
+  namespace: {{ .Values.tenant.namespace }}
 spec:
-  podSelector:
-    matchLabels:
-      app: {{ .Values.appLabel }}
+  podSelector: {}
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     - from:
-{{- range .Values.allowedTenants }}
         - namespaceSelector:
             matchLabels:
-              tenant: {{ . }}
+              tenant: {{ .Values.tenant.name }}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              tenant: {{ .Values.tenant.name }}
 {{- end }}
 
 
+✔ Prevents cross-tenant access
+✔ Scales to hundreds of tenants
 
-tenant
+5️⃣ DNS Access Policy (Required)
 
-targetNamespace: app-namespace
-appLabel: my-app
+Without this, pods won’t resolve anything.
 
-allowedTenants:
-  - tenant-a
+templates/networkpolicy-dns.yaml
+
+{{- if and .Values.networkPolicy.enabled .Values.networkPolicy.allowDNS }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: {{ .Values.tenant.namespace }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}
+
+6️⃣ Optional: Controlled External Egress
+
+Tenants cannot access each other, but may need controlled egress.
+
+values.yaml
+networkPolicy:
+  extraEgress:
+    - toCIDR: 0.0.0.0/0
+      ports:
+        - port: 443
+
+Template Snippet
+{{- range .Values.networkPolicy.extraEgress }}
+- to:
+    - ipBlock:
+        cidr: {{ .toCIDR }}
+  ports:
+  {{- range .ports }}
+    - protocol: TCP
+      port: {{ .port }}
+  {{- end }}
+{{- end }}
 
 
-Namespace label:
+✔ Tenants only get what is explicitly allowed
+✔ Central team controls defaults
 
-tenant: tenant-a
-
-
-### multiple  
-targetNamespace: app-namespace
-appLabel: my-app
-
-allowedTenants:
-  - tenant-a
-  - tenant-b
-  - tenant-c
+7️⃣ Helm Release Flow
+helm install tenant-a ./tenant-chart -f values-tenant-a.yaml
+helm install tenant-b ./tenant-chart -f values-tenant-b.yaml
 
 
+Each release:
 
+Creates namespace
+
+Applies isolation
+
+Cannot affect other tenants
+
+8️⃣ HARDENING (Highly Recommended)
+🔐 Admission Control (OPA/Gatekeeper)
+
+Require every tenant namespace to have:
+
+default-deny
+
+allow-same-tenant
+
+🔐 RBAC
+
+Tenants:
+
+No permission to create/edit NetworkPolicy
+
+No permission to label namespaces
+
+🔐 Calico Global Policy (Best Safety Net)
+
+Prevents mistakes even if Helm fails.
+
+9️⃣ Final Isolation Guarantee
+Attack	Blocked
+Tenant tries to reach another tenant	✅
+Tenant removes NetworkPolicy	❌ (RBAC)
+Tenant fakes labels	❌
+Tenant opens wildcard access	❌
+Tenant compromises pod	Contained
+10️⃣ Want This Taken Further?
+
+I can:
+
+Convert this into a reusable tenant Helm chart
+
+Add OPA policies for enforcement
+
+Design per-service zero-trust policies
+
+Show Calico GlobalNetworkPolicy templates
+
+Add EKS node isolation per tenant
+
+Just say the word 🚀
+
+English (US)
+English (UK)
+普通话 (中国大陆)
+中文 (台灣)
+粵語 (香港)
+Bahasa Indonesia
+Deutsch
+Español (ES)
+Français
+Italiano
+Nederlands
+Polski
+Português (BR)
+日本語
+한국어
+Pусский
+हिन्दी
