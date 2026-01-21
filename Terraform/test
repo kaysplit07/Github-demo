@@ -1,0 +1,204 @@
+from playwright.sync_api import sync_playwright
+import pytest
+import re
+from playwright.sync_api import Page, expect
+from datetime import datetime
+from common_env import (
+load_env, get_logger
+)
+today = datetime.now().strftime("%m/%d/%Y")
+import time
+from common_env import get_sourcing_url, get_cig_user, get_cig_password, get_temp
+logger = get_logger(log_file="BV8-cre.log")
+load_env()
+#from dotenv import load_dotenv
+URL = get_sourcing_url() 
+username = get_cig_user() 
+password = get_cig_password() 
+template = get_temp()
+def test_contracts_login(page: Page):  # ← pytest provides the 'page' fixture
+    """Use the page fixture provided by pytest-playwright"""
+    scope=page
+    try:
+        #
+        logger.info("=== Starting Contracts Test ===")
+        page.goto(URL, wait_until="domcontentloaded")
+        logger.info("login form filled...")
+        page.wait_for_selector("input[name='UserName']", state="visible", timeout=15000) 
+        page.fill("input[name='UserName']", username)  
+        page.fill("input[name='Password']", password)
+        page.locator("input[type='submit']").click() 
+        logger.info("Login Successful...")
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000) 
+        logger.info("Select Template ubder Manager...")
+        page.locator('a[awname="Manage"]').click()
+        page.get_by_role("menuitem", name="Templates").click()
+        logger.info("Page load successfully...")
+        page.wait_for_load_state("networkidle")
+        logger.info("Returned to Home page...")
+        page.locator('img.a-cmdbar-prod-logo').click()
+        page.wait_for_load_state("networkidle")
+        logger.info("Create Contracts Workace...")
+        page.locator('[awname="Platform_CommonActions_Create_ariba.collaborate.contracts.ContractWorkspace::CommonActionsPortlet:currentActionClicked"]').click() 
+        page.locator('input[name="_dfkgkc"]').fill(f"{"Kayode"}_{int(time.time())}")
+        page.locator('input[value="_gnfsy"]').click(force=True) 
+        page.locator('input[name="_ffxj3c"]').fill(today)
+        page.evaluate(
+        """(template) => {
+        var radio = document.querySelector(`input[awname="selectedTemplate_Demo test ${template}::RadioDummyValue"]`);
+        if (radio) {
+        radio.scrollIntoView({behavior: 'smooth', block: 'center'});
+        radio.checked = true;
+        // Create and dispatch the change event
+        var event = new Event('change', { bubbles: true });
+        radio.dispatchEvent(event);
+        // Trigger Ariba handler if available
+        if (typeof ariba !== 'undefined' && ariba.Handlers && ariba.Handlers.hKeyDown) {
+        try {
+        ariba.Handlers.hKeyDown('_j7mzu', radio.id, event);
+        } catch (e) {
+        console.log('Handler error:', e);
+        }
+        }
+        } else {
+        console.log('Radio button not found for', temp);
+        }
+        }""",
+        template, 
+        )
+        page.wait_for_timeout(3000)
+        logger.info("Contract succesfully created...")
+        page.get_by_role("button", name="Create").first.click(force=True)
+        while True:
+            pass
+    except Exception as e:
+        logger.error(f"Test failed with error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        # Log stack trace for debugging
+        import traceback
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        raise  # Re-raise the exception to fail the test
+
+
+################################################################
+
+from playwright.sync_api import Playwright, sync_playwright, expect
+from rich.console import Console
+from dotenv import load_dotenv
+import os
+
+# Load variables from env.cre
+load_dotenv(".env.cre")
+
+# Variables
+RISK_USER = os.getenv("SR_USER")
+RISK_PASSWORD = os.getenv("SR_PASSWORD")
+SOURCE_URL = os.getenv("SOURCING_URL")
+
+
+console = Console()
+
+def test(playwright: Playwright) -> None:
+    # Launching Browser
+    console.log("[bold cyan]Launching Browser[/bold cyan]")
+    console.log("[bold cyan]Launching Browser[/bold cyan]")
+    browser = playwright.chromium.launch(headless=True)
+    context = browser.new_context()
+    page = context.new_page()
+
+    try:
+        # Navigating to Sourcing Login
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Sourcing Login")
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Sourcing Login")
+        page.goto(SOURCE_URL)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    try:
+        # Login
+        console.log("[yellow]EXPECT:[/yellow] Logging into Sourcing")
+        console.log("[yellow]EXPECT:[/yellow] Logging into Sourcing")
+        console.log("Fill User")
+        page.get_by_role("textbox", name="User Name").click()
+        page.get_by_role("textbox", name="User Name").fill(RISK_USER)
+        console.log("Fill Password")
+        page.get_by_role("textbox", name="Password").click()
+        page.get_by_role("textbox", name="Password").fill(RISK_PASSWORD)
+        console.log("Click Sign In")
+        page.get_by_role("button", name="Sign In").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    try:
+        # Issues Dashboard 
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Issues Dashboard")
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Issues Dashboard")
+        console.log("Click Issues")
+        page.locator("iframe[name=\"RiskFrame\"]").content_frame.get_by_label("Issues").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    try:
+        # Back out of Issues Dashboard
+        console.log("[yellow]EXPECT:[/yellow] Backing out of Issues Dashboard")
+        console.log("[yellow]EXPECT:[/yellow] Backing out of Issues Dashboard")
+        console.log("Click Back")
+        page.locator("iframe[name=\"RiskFrame\"]").content_frame.get_by_role("link", name=" Back").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    try:
+        # Explore Engagement Request
+        console.log("[yellow]EXPECT:[/yellow] Explore Engagement Request")
+        console.log("[yellow]EXPECT:[/yellow] Explore Engagement Request")
+        console.log("Click Engagement Request")
+        page.locator("iframe[name=\"RiskFrame\"]").content_frame.get_by_text("Engagement Request").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    try:
+        # Request Filters
+        console.log("[yellow]EXPECT:[/yellow] Explore Engagement Request Filters")
+        console.log("[yellow]EXPECT:[/yellow] Explore Engagement Request Filters")
+        frame = page.locator("iframe[name=\"RiskFrame\"]").content_frame
+        console.log("Click New requests")
+        frame.get_by_text("New requests").click()
+        console.log("Click In progress")
+        frame.get_by_text("In progress").click()
+        console.log("Click Completed")
+        frame.get_by_text("Completed").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+
+    console.log("[bold magenta] Supplier Risk Sanity Testing Completed[/bold magenta]")
+    console.log("[bold red] Sanity Test Closing[/bold red]")    
+    
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    test(playwright)
+\ No newline at end of file
+
+
