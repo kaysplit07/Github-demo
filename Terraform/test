@@ -201,4 +201,130 @@ with sync_playwright() as playwright:
     test(playwright)
 \ No newline at end of file
 
+######################################
+
+from playwright.sync_api import Playwright, sync_playwright, expect
+from rich.console import Console
+from datetime import datetime
+import time
+from common_env import (
+    load_env,
+    get_sourcing_url,
+    get_cig_user,
+    get_cig_password,
+    get_temp
+)
+
+# --------------------------------------------------
+# Setup
+# --------------------------------------------------
+console = Console()
+load_env()
+
+URL = get_sourcing_url()
+USERNAME = get_cig_user()
+PASSWORD = get_cig_password()
+TEMPLATE = get_temp()
+TODAY = datetime.now().strftime("%m/%d/%Y")
+
+# --------------------------------------------------
+# Test Function
+# --------------------------------------------------
+def test(playwright: Playwright) -> None:
+    console.log("[bold cyan]Launching Browser[/bold cyan]")
+    browser = playwright.chromium.launch(headless=True)
+    context = browser.new_context()
+    page = context.new_page()
+
+    try:
+        # Navigate to Login
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Contracts Login")
+        page.goto(URL)
+        page.wait_for_load_state("domcontentloaded")
+        page.wait_for_selector("input[name='UserName']", timeout=15000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+        raise
+
+    try:
+        # Login
+        console.log("[yellow]EXPECT:[/yellow] Logging into Contracts")
+        page.fill("input[name='UserName']", USERNAME)
+        page.fill("input[name='Password']", PASSWORD)
+        page.locator("input[type='submit']").click()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+        raise
+
+    try:
+        # Navigate to Templates
+        console.log("[yellow]EXPECT:[/yellow] Navigating to Templates")
+        page.locator('a[awname="Manage"]').click()
+        page.get_by_role("menuitem", name="Templates").click()
+        page.wait_for_load_state("networkidle")
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+        raise
+
+    try:
+        # Return Home
+        console.log("[yellow]EXPECT:[/yellow] Returning to Home Page")
+        page.locator('img.a-cmdbar-prod-logo').click()
+        page.wait_for_load_state("networkidle")
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+        raise
+
+    try:
+        # Create Contract Workspace
+        console.log("[yellow]EXPECT:[/yellow] Creating Contract Workspace")
+        page.locator(
+            '[awname="Platform_CommonActions_Create_ariba.collaborate.contracts.ContractWorkspace::CommonActionsPortlet:currentActionClicked"]'
+        ).click()
+
+        contract_name = f"Kayode_{int(time.time())}"
+        page.locator('input[name="_dfkgkc"]').fill(contract_name)
+        page.locator('input[value="_gnfsy"]').click(force=True)
+        page.locator('input[name="_ffxj3c"]').fill(TODAY)
+
+        console.log("Selecting template")
+        page.evaluate(
+            """(template) => {
+                const radio = document.querySelector(
+                  `input[awname="selectedTemplate_Demo test ${template}::RadioDummyValue"]`
+                );
+                if (!radio) throw new Error("Template radio not found");
+                radio.scrollIntoView({block: 'center'});
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }""",
+            TEMPLATE,
+        )
+
+        page.wait_for_timeout(3000)
+        page.get_by_role("button", name="Create").first.click(force=True)
+        page.wait_for_load_state("networkidle")
+        console.log("[green]PASSED[/green]")
+    except Exception as e:
+        console.log(f"[red]FAILED[/red] ({e})")
+        raise
+
+    console.log("[bold magenta]Contracts Sanity Testing Completed[/bold magenta]")
+    console.log("[bold red]Sanity Test Closing[/bold red]")
+
+    context.close()
+    browser.close()
+
+
+# --------------------------------------------------
+# Runner
+# --------------------------------------------------
+with sync_playwright() as playwright:
+    test(playwright)
 
